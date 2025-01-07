@@ -28,6 +28,8 @@ public class RideDto {
     private RideRequestMethod rideRequestMethod;
     private RideStatus rideStatus;
 
+    private String otp;
+
     private Double fare;
     private LocalDateTime startedAt;
     private LocalDateTime endedAt;
