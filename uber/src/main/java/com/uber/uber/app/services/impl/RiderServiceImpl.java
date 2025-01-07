@@ -7,9 +7,13 @@ import com.uber.uber.app.dto.RiderDto;
 import com.uber.uber.app.entities.Driver;
 import com.uber.uber.app.entities.Ride;
 import com.uber.uber.app.entities.RideRequest;
+import com.uber.uber.app.entities.enums.RideRequestMethod;
 import com.uber.uber.app.entities.enums.RideStatus;
+import com.uber.uber.app.repository.RideRequestRepository;
 import com.uber.uber.app.services.RideService;
 import com.uber.uber.app.services.RiderService;
+import com.uber.uber.app.strategies.CalculateFareStrategy;
+import com.uber.uber.app.strategies.DriverMatchingStrategy;
 import lombok.RequiredArgsConstructor;
 import org.modelmapper.ModelMapper;
 import org.springframework.data.domain.Page;
@@ -23,12 +27,23 @@ import java.util.List;
 public class RiderServiceImpl implements RiderService {
 
     private final ModelMapper modelMapper;
+    private final CalculateFareStrategy calculateFareStrategy;
+    private final DriverMatchingStrategy driverMatchingStrategy;
+    private final RideRequestRepository rideRequestRepository;
 
     @Override
     public RideRequestDto requestRide(RideRequestDto rideRequestDto) {
         RideRequest rideRequest = modelMapper.map(rideRequestDto, RideRequest.class);
+        rideRequest.setRideRequestMethod(RideRequestMethod.PENDING);
 
-        return null;
+        double fare = calculateFareStrategy.calculateFare(rideRequest);
+        rideRequest.setFare(fare);
+
+        RideRequest savedRideRequest =  rideRequestRepository.save(rideRequest);
+
+        driverMatchingStrategy.matchDrivers(rideRequest);
+
+        return modelMapper.map(savedRideRequest, RideRequestDto.class);
     }
 
     @Override
